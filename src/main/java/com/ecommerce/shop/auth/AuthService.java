@@ -2,13 +2,16 @@ package com.ecommerce.shop.auth;
 
 import com.ecommerce.shop.auth.dto.AuthResponse;
 import com.ecommerce.shop.auth.dto.LoginRequest;
+import com.ecommerce.shop.auth.dto.RefreshRequest;
 import com.ecommerce.shop.auth.dto.RegisterRequest;
 import com.ecommerce.shop.auth.dto.UserResponse;
+import com.ecommerce.shop.security.InvalidTokenException;
 import com.ecommerce.shop.security.JwtService;
 import com.ecommerce.shop.security.UserPrincipal;
 import com.ecommerce.shop.user.Role;
 import com.ecommerce.shop.user.User;
 import com.ecommerce.shop.user.UserRepository;
+import io.jsonwebtoken.Claims;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -62,6 +65,37 @@ public class AuthService {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
 
         return issueTokenPair(principal.getId(), principal.getUsername(), principal.getRole());
+    }
+
+    public AuthResponse refresh(RefreshRequest request) {
+        Claims claims = jwtService.parseRefreshToken(request.refreshToken());
+        String jti = claims.getId();
+        String userId = claims.getSubject();
+
+        RefreshToken stored = refreshTokenRepository.findByJti(jti)
+                .orElseThrow(() -> new InvalidTokenException("Refresh token not recognized"));
+
+        if (stored.isRevoked() || stored.getExpiresAt().isBefore(Instant.now())) {
+            throw new InvalidTokenException("Refresh token is no longer valid");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new InvalidTokenException("User no longer exists"));
+
+        revoke(stored);
+
+        return issueTokenPair(user.getId(), user.getEmail(), user.getRole().name());
+    }
+
+    private void revoke(RefreshToken token) {
+        refreshTokenRepository.save(RefreshToken.builder()
+                .id(token.getId())
+                .userId(token.getUserId())
+                .jti(token.getJti())
+                .expiresAt(token.getExpiresAt())
+                .revoked(true)
+                .createdAt(token.getCreatedAt())
+                .build());
     }
 
     private AuthResponse issueTokenPair(String userId, String email, String role) {

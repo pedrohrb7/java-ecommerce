@@ -1761,7 +1761,7 @@ git commit -m "feat: add login endpoint issuing access and refresh tokens"
 - Consumes: `JwtService.parseRefreshToken` (Task 3), `RefreshTokenRepository.findByJti` (Task 6), `InvalidTokenException` (Task 3), `AuthService.issueTokenPair` (Task 8, private helper reused here).
 - Produces: `AuthService.refresh(RefreshRequest): AuthResponse` — rotates the refresh token (deletes the old `jti`, issues a new pair).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1853,12 +1853,12 @@ class AuthControllerRefreshTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./mvnw test -Dtest=AuthControllerRefreshTest`
 Expected: FAIL to compile — no `/api/auth/refresh` mapping, no `RefreshRequest`, no `AuthService.refresh`.
 
-- [ ] **Step 3: Write `RefreshRequest.java`**
+- [x] **Step 3: Write `RefreshRequest.java`**
 
 ```java
 package com.ecommerce.shop.auth.dto;
@@ -1869,7 +1869,7 @@ public record RefreshRequest(@NotBlank String refreshToken) {
 }
 ```
 
-- [ ] **Step 4: Replace `AuthService.java` with the full updated version**
+- [x] **Step 4: Replace `AuthService.java` with the full updated version**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1956,9 +1956,20 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new InvalidTokenException("User no longer exists"));
 
-        refreshTokenRepository.deleteById(stored.getId());
+        revoke(stored);
 
         return issueTokenPair(user.getId(), user.getEmail(), user.getRole().name());
+    }
+
+    private void revoke(RefreshToken token) {
+        refreshTokenRepository.save(RefreshToken.builder()
+                .id(token.getId())
+                .userId(token.getUserId())
+                .jti(token.getJti())
+                .expiresAt(token.getExpiresAt())
+                .revoked(true)
+                .createdAt(token.getCreatedAt())
+                .build());
     }
 
     private AuthResponse issueTokenPair(String userId, String email, String role) {
@@ -1978,7 +1989,9 @@ public class AuthService {
 }
 ```
 
-- [ ] **Step 5: Add the refresh mapping to `AuthController.java`**
+> **Deviation from original plan (discovered during doc-alignment check):** the first version of `refresh()` called `refreshTokenRepository.deleteById(...)` instead of flag-based revocation, contradicting both the spec's "revokes the old" language and `RefreshToken.revoked`'s own purpose (checked via `stored.isRevoked()` but never set `true` anywhere). Switched to a `revoke()` helper that saves the row back with `revoked=true`, kept for Task 10's `logout()` to reuse — rows now persist after rotation/logout instead of being deleted, matching the spec and the "cheap DB flag flip" reasoning in the concepts doc.
+
+- [x] **Step 5: Add the refresh mapping to `AuthController.java`**
 
 Add this method inside the existing `AuthController` class (alongside `register` and `login`), and add `import com.ecommerce.shop.auth.dto.RefreshRequest;` to the imports:
 
@@ -1989,14 +2002,14 @@ Add this method inside the existing `AuthController` class (alongside `register`
     }
 ```
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `./mvnw test -Dtest=AuthControllerRefreshTest`
 Expected: `Tests run: 3, Failures: 0, Errors: 0`.
 
 Also re-run Tasks 7 and 8's tests to confirm no regression: `./mvnw test -Dtest=AuthControllerRegisterTest,AuthControllerLoginTest` → both green.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/main/java/com/ecommerce/shop/auth src/test/java/com/ecommerce/shop/auth/AuthControllerRefreshTest.java
@@ -2135,16 +2148,18 @@ Expected: FAIL — no `/api/auth/logout` mapping (`404`) and no `AuthService.log
 
 - [ ] **Step 3: Add `logout` to `AuthService.java`**
 
-Add this method inside the existing `AuthService` class (alongside `register`, `login`, `refresh`, `issueTokenPair`), and add `import com.ecommerce.shop.auth.dto.RefreshRequest;` if not already present (it was added in Task 9):
+Add this method inside the existing `AuthService` class (alongside `register`, `login`, `refresh`, `revoke`, `issueTokenPair`), and add `import com.ecommerce.shop.auth.dto.RefreshRequest;` if not already present (it was added in Task 9):
 
 ```java
     public void logout(RefreshRequest request) {
         Claims claims = jwtService.parseRefreshToken(request.refreshToken());
         String jti = claims.getId();
 
-        refreshTokenRepository.findByJti(jti).ifPresent(refreshTokenRepository::delete);
+        refreshTokenRepository.findByJti(jti).ifPresent(this::revoke);
     }
 ```
+
+Reuses the `revoke()` helper Task 9 added — logout revokes the same way rotation does (flag flip, not delete), so a revoked row still exists afterward and `findByJti` on it fails the `isRevoked()` check in `refresh()`, rather than failing to find it at all. Both look like 401 to the caller either way.
 
 - [ ] **Step 4: Add the logout mapping to `AuthController.java`**
 
