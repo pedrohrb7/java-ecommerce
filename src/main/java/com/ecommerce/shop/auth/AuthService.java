@@ -87,6 +87,13 @@ public class AuthService {
         return issueTokenPair(user.getId(), user.getEmail(), user.getRole().name());
     }
 
+    public void logout(RefreshRequest request) {
+        Claims claims = jwtService.parseRefreshToken(request.refreshToken());
+        String jti = claims.getId();
+
+        refreshTokenRepository.findByJti(jti).ifPresent(this::revoke);
+    }
+
     private void revoke(RefreshToken token) {
         refreshTokenRepository.save(RefreshToken.builder()
                 .id(token.getId())

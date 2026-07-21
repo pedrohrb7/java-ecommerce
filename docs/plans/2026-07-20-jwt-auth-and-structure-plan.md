@@ -2029,7 +2029,7 @@ git commit -m "feat: add refresh endpoint with refresh token rotation"
 - Consumes: `RefreshTokenRepository` (Task 6), `JwtService.parseRefreshToken` (Task 3), `RefreshRequest` (Task 9, reused — logout takes the same `{ refreshToken }` shape as refresh).
 - Produces: `AuthService.logout(RefreshRequest): void`; `POST /api/auth/logout` → `204`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -2141,12 +2141,12 @@ class AuthControllerLogoutAndFlowTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./mvnw test -Dtest=AuthControllerLogoutAndFlowTest`
 Expected: FAIL — no `/api/auth/logout` mapping (`404`) and no `AuthService.logout`.
 
-- [ ] **Step 3: Add `logout` to `AuthService.java`**
+- [x] **Step 3: Add `logout` to `AuthService.java`**
 
 Add this method inside the existing `AuthService` class (alongside `register`, `login`, `refresh`, `revoke`, `issueTokenPair`), and add `import com.ecommerce.shop.auth.dto.RefreshRequest;` if not already present (it was added in Task 9):
 
@@ -2161,7 +2161,7 @@ Add this method inside the existing `AuthService` class (alongside `register`, `
 
 Reuses the `revoke()` helper Task 9 added — logout revokes the same way rotation does (flag flip, not delete), so a revoked row still exists afterward and `findByJti` on it fails the `isRevoked()` check in `refresh()`, rather than failing to find it at all. Both look like 401 to the caller either way.
 
-- [ ] **Step 4: Add the logout mapping to `AuthController.java`**
+- [x] **Step 4: Add the logout mapping to `AuthController.java`**
 
 Add this method inside the existing `AuthController` class:
 
@@ -2173,17 +2173,17 @@ Add this method inside the existing `AuthController` class:
     }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `./mvnw test -Dtest=AuthControllerLogoutAndFlowTest`
 Expected: `Tests run: 2, Failures: 0, Errors: 0`.
 
-- [ ] **Step 6: Run the full test suite**
+- [x] **Step 6: Run the full test suite**
 
 Run: `./mvnw test`
 Expected: `BUILD SUCCESS`, all tests across every task green.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/main/java/com/ecommerce/shop/auth src/test/java/com/ecommerce/shop/auth/AuthControllerLogoutAndFlowTest.java
