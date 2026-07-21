@@ -36,7 +36,7 @@
 **Interfaces:**
 - Produces: a reachable MongoDB at `localhost:27017` (via `docker compose up -d mongodb`), `spring.data.mongodb.uri`, `jwt.secret`, `jwt.access-token-expiration-ms`, `jwt.refresh-token-expiration-ms` properties available to every later task. `pom.xml` gains `spring-boot-starter-security`, `spring-boot-starter-validation`, and `io.jsonwebtoken:jjwt-{api,impl,jackson}:0.12.6`.
 
-- [ ] **Step 1: Create the Dockerfile**
+- [x] **Step 1: Create the Dockerfile**
 
 ```dockerfile
 FROM eclipse-temurin:21-jdk AS build
@@ -54,7 +54,7 @@ EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
-- [ ] **Step 2: Create `.dockerignore`**
+- [x] **Step 2: Create `.dockerignore`**
 
 ```
 target
@@ -67,7 +67,7 @@ docs
 .factorypath
 ```
 
-- [ ] **Step 3: Create `docker-compose.yml`**
+- [x] **Step 3: Create `docker-compose.yml`**
 
 ```yaml
 services:
@@ -93,7 +93,7 @@ volumes:
   mongo_data:
 ```
 
-- [ ] **Step 4: Add new dependencies to `pom.xml`**
+- [x] **Step 4: Add new dependencies to `pom.xml`**
 
 Insert these five `<dependency>` blocks into the existing `<dependencies>` section (anywhere among the other entries is fine — order doesn't matter to Maven):
 
@@ -128,7 +128,7 @@ Insert these five `<dependency>` blocks into the existing `<dependencies>` secti
 Run: `./mvnw -q dependency:tree`
 Expected: `BUILD SUCCESS`, tree includes `spring-boot-starter-security`, `spring-boot-starter-validation`, and the three `jjwt-*:0.12.6` entries.
 
-- [ ] **Step 5: Update `src/main/resources/application.properties`**
+- [x] **Step 5: Update `src/main/resources/application.properties`**
 
 Replace the file's contents with:
 
@@ -141,7 +141,7 @@ jwt.access-token-expiration-ms=900000
 jwt.refresh-token-expiration-ms=604800000
 ```
 
-- [ ] **Step 6: Create `src/test/resources/application.properties`**
+- [x] **Step 6: Create `src/test/resources/application.properties`**
 
 Test resources take precedence over main resources on the test classpath, so this overrides the above automatically for every test — no `@ActiveProfiles` needed.
 
@@ -154,7 +154,7 @@ jwt.access-token-expiration-ms=900000
 jwt.refresh-token-expiration-ms=604800000
 ```
 
-- [ ] **Step 7: Start MongoDB and verify the app still boots and connects**
+- [x] **Step 7: Start MongoDB and verify the app still boots and connects**
 
 Run: `docker compose up -d mongodb`
 Expected: container `shop-mongodb` running (`docker compose ps` shows it healthy/up).
@@ -162,7 +162,7 @@ Expected: container `shop-mongodb` running (`docker compose ps` shows it healthy
 Run: `./mvnw test -Dtest=ShopApplicationTests`
 Expected: `BUILD SUCCESS`, `Tests run: 1, Failures: 0, Errors: 0` (this is the existing `contextLoads` test — it now proves the app starts cleanly with Security/Validation/jjwt on the classpath and a real Mongo reachable).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add Dockerfile docker-compose.yml .dockerignore pom.xml src/main/resources/application.properties src/test/resources/application.properties
@@ -183,7 +183,7 @@ git commit -m "chore: add Docker Compose MongoDB, security/jwt dependencies, and
 - Consumes: nothing from earlier tasks.
 - Produces: `Role` enum (`CUSTOMER`, `SELLER`, `ADMIN`); `User` (Lombok `@Getter @NoArgsConstructor @AllArgsConstructor @Builder`, fields `id`, `email`, `password`, `role`, `createdAt`); `UserRepository extends MongoRepository<User, String>` with `Optional<User> findByEmail(String)` and `boolean existsByEmail(String)` — both consumed by `CustomUserDetailsService` (Task 4) and `AuthService` (Task 7+).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.ecommerce.shop.user;
@@ -245,14 +245,14 @@ class UserRepositoryTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Precondition: `docker compose up -d mongodb` (see Task 1).
 
 Run: `./mvnw test -Dtest=UserRepositoryTest`
 Expected: FAIL to compile — `Role`, `User`, `UserRepository` don't exist yet.
 
-- [ ] **Step 3: Write `Role.java`**
+- [x] **Step 3: Write `Role.java`**
 
 ```java
 package com.ecommerce.shop.user;
@@ -264,7 +264,7 @@ public enum Role {
 }
 ```
 
-- [ ] **Step 4: Write `User.java`**
+- [x] **Step 4: Write `User.java`**
 
 ```java
 package com.ecommerce.shop.user;
@@ -300,7 +300,7 @@ public class User {
 }
 ```
 
-- [ ] **Step 5: Write `UserRepository.java`**
+- [x] **Step 5: Write `UserRepository.java`**
 
 ```java
 package com.ecommerce.shop.user;
@@ -317,12 +317,12 @@ public interface UserRepository extends MongoRepository<User, String> {
 }
 ```
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `./mvnw test -Dtest=UserRepositoryTest`
 Expected: `Tests run: 3, Failures: 0, Errors: 0`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/main/java/com/ecommerce/shop/user src/test/java/com/ecommerce/shop/user
@@ -346,7 +346,7 @@ git commit -m "feat: add User domain model and repository"
 - Consumes: nothing from earlier tasks (this is a pure unit test, no Mongo, no Spring context).
 - Produces: `ApiException` (abstract, `getStatus(): HttpStatus`) — base for all later domain exceptions; `ApiError` record (`timestamp, status, error, message, path`); `JwtService` with `generateAccessToken(String userId, String email, String role): String`, `generateRefreshToken(String userId): JwtService.GeneratedRefreshToken` (`record GeneratedRefreshToken(String token, String jti, Instant expiresAt)`), `parseAccessToken(String): Claims`, `parseRefreshToken(String): Claims`, `getAccessTokenExpirationMs(): long` — all consumed by `JwtAuthenticationFilter` (Task 5) and `AuthService` (Task 7+).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.ecommerce.shop.security;
@@ -434,12 +434,12 @@ class JwtServiceTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./mvnw test -Dtest=JwtServiceTest`
 Expected: FAIL to compile — none of `JwtProperties`, `JwtService`, `InvalidTokenException` exist yet.
 
-- [ ] **Step 3: Write `ApiException.java`**
+- [x] **Step 3: Write `ApiException.java`**
 
 ```java
 package com.ecommerce.shop.common.exception;
@@ -461,7 +461,7 @@ public abstract class ApiException extends RuntimeException {
 }
 ```
 
-- [ ] **Step 4: Write `ApiError.java`**
+- [x] **Step 4: Write `ApiError.java`**
 
 ```java
 package com.ecommerce.shop.common.exception;
@@ -472,7 +472,7 @@ public record ApiError(Instant timestamp, int status, String error, String messa
 }
 ```
 
-- [ ] **Step 5: Write `JwtProperties.java`**
+- [x] **Step 5: Write `JwtProperties.java`**
 
 ```java
 package com.ecommerce.shop.security;
@@ -484,7 +484,7 @@ public record JwtProperties(String secret, long accessTokenExpirationMs, long re
 }
 ```
 
-- [ ] **Step 6: Write `InvalidTokenException.java`**
+- [x] **Step 6: Write `InvalidTokenException.java`**
 
 ```java
 package com.ecommerce.shop.security;
@@ -499,7 +499,7 @@ public class InvalidTokenException extends ApiException {
 }
 ```
 
-- [ ] **Step 7: Write `JwtService.java`**
+- [x] **Step 7: Write `JwtService.java`**
 
 ```java
 package com.ecommerce.shop.security;
@@ -597,7 +597,7 @@ public class JwtService {
 }
 ```
 
-- [ ] **Step 8: Enable `@ConfigurationProperties` binding — modify `ShopApplication.java`**
+- [x] **Step 8: Enable `@ConfigurationProperties` binding — modify `ShopApplication.java`**
 
 ```java
 package com.ecommerce.shop;
@@ -617,12 +617,12 @@ public class ShopApplication {
 }
 ```
 
-- [ ] **Step 9: Run test to verify it passes**
+- [x] **Step 9: Run test to verify it passes**
 
 Run: `./mvnw test -Dtest=JwtServiceTest`
 Expected: `Tests run: 6, Failures: 0, Errors: 0`.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add src/main/java/com/ecommerce/shop/common src/main/java/com/ecommerce/shop/security src/main/java/com/ecommerce/shop/ShopApplication.java src/test/java/com/ecommerce/shop/security

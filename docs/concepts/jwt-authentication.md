@@ -117,8 +117,10 @@ files scattered across the same three top-level folders.
 
 ## Implemented so far
 
-- **Signing, access/refresh tokens, the `type` claim, expiry** — `src/main/java/com/ecommerce/shop/security/JwtService.java`, tested in `src/test/java/com/ecommerce/shop/security/JwtServiceTest.java`. Configuration (`jwt.secret`, expirations) is bound via `JwtProperties.java` (`@ConfigurationProperties`) from `application.properties`.
-- **Password hashing, security filter chain, role-based authorization, feature-based packaging** — not yet implemented; this section will grow as those tasks land.
+- **Local MongoDB & config plumbing** (Task 1) — `docker-compose.yml` runs a `mongo:7.0` container on `localhost:27017`; `application.properties` / `src/test/resources/application.properties` hold the Mongo URI and `jwt.*` settings (dev vs. test use separate databases, `shop` and `shop_test`).
+- **User domain model** (Task 2) — `src/main/java/com/ecommerce/shop/user/{Role,User,UserRepository}.java`, tested in `UserRepositoryTest.java`. `Role` is the three-value enum (`CUSTOMER`, `SELLER`, `ADMIN`); `User` is the Mongo `@Document` with a unique-indexed `email`.
+- **Signing, access/refresh tokens, the `type` claim, expiry** (Task 3) — `src/main/java/com/ecommerce/shop/security/JwtService.java`, tested in `JwtServiceTest.java`. Configuration (`jwt.secret`, expirations) is bound via `JwtProperties.java` (`@ConfigurationProperties`) from `application.properties`. The base `ApiException`/`ApiError` types (`common/exception/`) that later error handling builds on are also in place.
+- **Password hashing, security filter chain, role-based authorization** — not yet implemented; this section will grow as those tasks land.
 
 *This doc will be expanded with concrete file references as each piece above gets
 implemented.*
