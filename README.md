@@ -1,6 +1,6 @@
 # shop
 
-An e-commerce API built with Spring Boot 4.1 (Java 21), Spring Security, and MongoDB. Started as a learning project for JWT authentication and feature-based Java project structure — see [`docs/`](docs) for the design spec, concepts write-up, and implementation plan behind the current work.
+An e-commerce API built with Spring Boot 4.1 (Java 21), Spring Security, and MongoDB. Started as a learning project for JWT authentication and feature-based Java project structure. See [`docs/PRD.md`](docs/PRD.md) for the product vision (what this API is building toward and why), and [`docs/`](docs) generally for the design specs, concepts write-ups, and implementation plans behind the current work.
 
 ## Prerequisites
 
