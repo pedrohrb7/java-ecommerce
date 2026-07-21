@@ -10,16 +10,11 @@
 
 ## Global Constraints
 
-- Java 21, Spring Boot 4.1.0 (parent-managed versions — do not hardcode versions Boot already manages; only jjwt needs an explicit version, `0.12.6`).
-- Package root: `com.ecommerce.shop`. Feature-based packages only — do not introduce top-level `controller/`, `service/`, `repository/` packages.
-- Roles: `CUSTOMER`, `SELLER`, `ADMIN` as a single `Role` enum field on `User` (not a set). `ADMIN` is never selectable via `/api/auth/register`.
-- Access token expiry: 15 minutes (`900000` ms). Refresh token expiry: 7 days (`604800000` ms). Both configurable via `jwt.access-token-expiration-ms` / `jwt.refresh-token-expiration-ms`.
-- Every JWT carries a `type` claim (`"access"` or `"refresh"`) and must be checked on every validation.
-- Refresh tokens are tracked in MongoDB (`refresh_tokens` collection) by their `jti` claim, not by the raw token string. Every `/api/auth/refresh` call rotates: old `jti` is deleted, a new access+refresh pair is issued.
-- Passwords hashed with `BCryptPasswordEncoder`. Never log or return a password.
-- `spring.data.mongodb.uri` resolves to `mongodb://localhost:27017/shop` for the running app and `mongodb://localhost:27017/shop_test` for tests. Both require MongoDB reachable at `localhost:27017` — this repo provisions that via `docker compose up -d mongodb` (Task 1). **Every task from Task 2 onward requires that container running before its tests will pass.**
-- `JwtAuthenticationFilter` must catch token validation failures itself and simply leave the security context empty — it must never let an exception propagate out of the filter chain, because filters run before the `DispatcherServlet` and `@RestControllerAdvice` cannot catch what they throw.
-- `AuthService.login()` and any code touching Spring Security's `AuthenticationManager` must not distinguish "wrong password" from "unknown email" in the response — both surface as `BadCredentialsException` → generic 401 "Invalid email or password" (Spring Security's `DaoAuthenticationProvider` already does this by default via `hideUserNotFoundExceptions`).
+See [`docs/CONSTRAINTS.md`](../CONSTRAINTS.md) for the project-wide rules (tech stack,
+package structure, roles, JWT/security rules, error contract) - this plan follows all of
+them. Plan-specific note not covered there: `spring.data.mongodb.uri` requires MongoDB
+reachable at `localhost:27017`, provisioned via `docker compose up -d mongodb` (Task 1) -
+every task from Task 2 onward requires that container running before its tests will pass.
 
 ---
 

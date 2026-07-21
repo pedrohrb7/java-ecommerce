@@ -3,7 +3,8 @@
 **Status:** Draft
 **Date:** 2026-07-21
 **Owner:** Pedro Borges
-**Related docs:** [`docs/specs/`](specs/) (design decisions), [`docs/plans/`](plans/) (build-out),
+**Related docs:** [`docs/CONSTRAINTS.md`](CONSTRAINTS.md) (project-wide rules),
+[`docs/specs/`](specs/) (design decisions), [`docs/plans/`](plans/) (build-out),
 [`docs/concepts/`](concepts/) (how it works), [`docs/backlog/`](backlog/) (known bugs and
 improvement ideas)
 

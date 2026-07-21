@@ -13,10 +13,10 @@
 
 ## Global constraints
 
-- Package placement: OpenAPI config is cross-cutting infrastructure, not a feature. Put it in a new `common/config/` package (sibling to the existing `common/exception/`), not inside `security/` or `auth/`.
-- `SecurityConfig` currently permits only `/api/auth/**` and locks everything else behind authentication (`anyRequest().authenticated()`). Swagger UI's static assets and the `/v3/api-docs` JSON must be added to the `permitAll()` matchers or the docs page itself will 401.
-- Keep `docs/requests/java-commerce-api.postman_collection.json` and this plan's Swagger UI in sync conceptually (same six endpoints); no need to keep them byte-identical, but don't let one document an endpoint the other omits.
-- Don't hand-write OpenAPI YAML/JSON - springdoc generates the spec from the existing controllers, `@Valid` DTOs, and annotations added below. Hand-maintained spec files would immediately drift, same problem this plan exists to solve.
+See [`docs/CONSTRAINTS.md`](../CONSTRAINTS.md) for the project-wide rules (code
+organization, security rules, API error contract, documentation conventions) - this plan
+follows all of them, and the springdoc/OpenAPI generation and `common/config/` placement
+decisions below are now reflected there too.
 
 ---
 
