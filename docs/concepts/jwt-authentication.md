@@ -114,5 +114,11 @@ without jumping between parallel directory trees. It also scales better as more 
 files scattered across the same three top-level folders.
 
 ---
+
+## Implemented so far
+
+- **Signing, access/refresh tokens, the `type` claim, expiry** — `src/main/java/com/ecommerce/shop/security/JwtService.java`, tested in `src/test/java/com/ecommerce/shop/security/JwtServiceTest.java`. Configuration (`jwt.secret`, expirations) is bound via `JwtProperties.java` (`@ConfigurationProperties`) from `application.properties`.
+- **Password hashing, security filter chain, role-based authorization, feature-based packaging** — not yet implemented; this section will grow as those tasks land.
+
 *This doc will be expanded with concrete file references as each piece above gets
 implemented.*
