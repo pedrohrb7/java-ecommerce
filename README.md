@@ -77,10 +77,16 @@ Configuration lives in `src/main/resources/application.properties`. Key settings
 | GET | `/api/admin/ping` | `ADMIN` only | Trivial role-check demo endpoint |
 
 Send the access token as `Authorization: Bearer <token>` on any request that requires auth.
-`ADMIN` accounts aren't self-service — `register` only accepts `CUSTOMER`/`SELLER`; create an
+`ADMIN` accounts aren't self-service - `register` only accepts `CUSTOMER`/`SELLER`; create an
 admin manually if you need one. See
 [`docs/concepts/jwt-authentication.md`](docs/concepts/jwt-authentication.md) for how the tokens
 and the security filter chain actually work.
+
+A ready-to-import Postman collection covering every endpoint above lives at
+[`docs/requests/java-commerce-api.postman_collection.json`](docs/requests/java-commerce-api.postman_collection.json)
+(see [`docs/requests/README.md`](docs/requests/README.md) for usage). Interactive Swagger/OpenAPI
+docs are planned but not yet implemented - see
+[`docs/plans/2026-07-21-swagger-openapi-documentation-plan.md`](docs/plans/2026-07-21-swagger-openapi-documentation-plan.md).
 
 ## Project structure
 
