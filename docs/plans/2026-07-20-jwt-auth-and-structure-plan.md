@@ -1084,7 +1084,7 @@ git commit -m "feat: add JWT auth filter, SecurityConfig, and role-demo endpoint
 - Consumes: nothing from earlier tasks.
 - Produces: `RefreshToken` (Lombok `@Getter @NoArgsConstructor @AllArgsConstructor @Builder`, fields `id, userId, jti, expiresAt, revoked, createdAt`); `RefreshTokenRepository extends MongoRepository<RefreshToken, String>` with `Optional<RefreshToken> findByJti(String)` — consumed by `AuthService` (Task 8+).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1135,12 +1135,12 @@ class RefreshTokenRepositoryTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./mvnw test -Dtest=RefreshTokenRepositoryTest`
 Expected: FAIL to compile — `RefreshToken` and `RefreshTokenRepository` don't exist yet.
 
-- [ ] **Step 3: Write `RefreshToken.java`**
+- [x] **Step 3: Write `RefreshToken.java`**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1178,7 +1178,7 @@ public class RefreshToken {
 }
 ```
 
-- [ ] **Step 4: Write `RefreshTokenRepository.java`**
+- [x] **Step 4: Write `RefreshTokenRepository.java`**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1193,12 +1193,12 @@ public interface RefreshTokenRepository extends MongoRepository<RefreshToken, St
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `./mvnw test -Dtest=RefreshTokenRepositoryTest`
 Expected: `Tests run: 2, Failures: 0, Errors: 0`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/main/java/com/ecommerce/shop/auth src/test/java/com/ecommerce/shop/auth
@@ -1222,7 +1222,7 @@ git commit -m "feat: add RefreshToken domain model and repository"
 - Consumes: `UserRepository` (Task 2), `ApiException`/`ApiError` (Task 3).
 - Produces: `GlobalExceptionHandler` (`@RestControllerAdvice`, maps `ApiException` → its own status, `BadCredentialsException` → 401, `MethodArgumentNotValidException` → 400, anything else → 500 — this is the handler every later `auth` endpoint relies on). `AuthService.register(RegisterRequest): UserResponse`. `AuthController` at `/api/auth` with `POST /register`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1298,12 +1298,12 @@ class AuthControllerRegisterTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./mvnw test -Dtest=AuthControllerRegisterTest`
 Expected: FAIL to compile — `RegisterRequest`, `AuthService`, `AuthController` don't exist yet.
 
-- [ ] **Step 3: Write `GlobalExceptionHandler.java`**
+- [x] **Step 3: Write `GlobalExceptionHandler.java`**
 
 ```java
 package com.ecommerce.shop.common.exception;
@@ -1352,7 +1352,7 @@ public class GlobalExceptionHandler {
 }
 ```
 
-- [ ] **Step 4: Write `DuplicateEmailException.java`**
+- [x] **Step 4: Write `DuplicateEmailException.java`**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1367,7 +1367,7 @@ public class DuplicateEmailException extends ApiException {
 }
 ```
 
-- [ ] **Step 5: Write `RegisterRequest.java`**
+- [x] **Step 5: Write `RegisterRequest.java`**
 
 ```java
 package com.ecommerce.shop.auth.dto;
@@ -1385,7 +1385,7 @@ public record RegisterRequest(
 }
 ```
 
-- [ ] **Step 6: Write `UserResponse.java`**
+- [x] **Step 6: Write `UserResponse.java`**
 
 ```java
 package com.ecommerce.shop.auth.dto;
@@ -1394,7 +1394,7 @@ public record UserResponse(String id, String email, String role) {
 }
 ```
 
-- [ ] **Step 7: Write `AuthService.java`**
+- [x] **Step 7: Write `AuthService.java`**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1439,7 +1439,7 @@ public class AuthService {
 }
 ```
 
-- [ ] **Step 8: Write `AuthController.java`**
+- [x] **Step 8: Write `AuthController.java`**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1472,12 +1472,12 @@ public class AuthController {
 }
 ```
 
-- [ ] **Step 9: Run test to verify it passes**
+- [x] **Step 9: Run test to verify it passes**
 
 Run: `./mvnw test -Dtest=AuthControllerRegisterTest`
 Expected: `Tests run: 4, Failures: 0, Errors: 0`.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add src/main/java/com/ecommerce/shop/common/exception/GlobalExceptionHandler.java src/main/java/com/ecommerce/shop/auth src/test/java/com/ecommerce/shop/auth/AuthControllerRegisterTest.java
@@ -1499,7 +1499,7 @@ git commit -m "feat: add register endpoint and global exception handling"
 - Consumes: `AuthenticationManager` (Task 5), `UserPrincipal` (Task 4), `JwtService.generateAccessToken/generateRefreshToken/getAccessTokenExpirationMs` (Task 3), `RefreshTokenRepository` (Task 6).
 - Produces: `AuthService.login(LoginRequest): AuthResponse`; a private `AuthService.issueTokenPair(String userId, String email, String role): AuthResponse` helper that Task 9's `refresh()` will reuse.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1578,12 +1578,12 @@ class AuthControllerLoginTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./mvnw test -Dtest=AuthControllerLoginTest`
 Expected: FAIL to compile — no `/api/auth/login` mapping, no `LoginRequest`/`AuthResponse`.
 
-- [ ] **Step 3: Write `LoginRequest.java`**
+- [x] **Step 3: Write `LoginRequest.java`**
 
 ```java
 package com.ecommerce.shop.auth.dto;
@@ -1598,7 +1598,7 @@ public record LoginRequest(
 }
 ```
 
-- [ ] **Step 4: Write `AuthResponse.java`**
+- [x] **Step 4: Write `AuthResponse.java`**
 
 ```java
 package com.ecommerce.shop.auth.dto;
@@ -1607,7 +1607,7 @@ public record AuthResponse(String accessToken, String refreshToken, String token
 }
 ```
 
-- [ ] **Step 5: Replace `AuthService.java` with the full updated version**
+- [x] **Step 5: Replace `AuthService.java` with the full updated version**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1693,7 +1693,7 @@ public class AuthService {
 }
 ```
 
-- [ ] **Step 6: Replace `AuthController.java` with the full updated version**
+- [x] **Step 6: Replace `AuthController.java` with the full updated version**
 
 ```java
 package com.ecommerce.shop.auth;
@@ -1733,14 +1733,14 @@ public class AuthController {
 }
 ```
 
-- [ ] **Step 7: Run test to verify it passes**
+- [x] **Step 7: Run test to verify it passes**
 
 Run: `./mvnw test -Dtest=AuthControllerLoginTest`
 Expected: `Tests run: 3, Failures: 0, Errors: 0`.
 
 Also re-run Task 7's test to confirm no regression: `./mvnw test -Dtest=AuthControllerRegisterTest` → `Tests run: 4, Failures: 0, Errors: 0`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/main/java/com/ecommerce/shop/auth src/test/java/com/ecommerce/shop/auth/AuthControllerLoginTest.java

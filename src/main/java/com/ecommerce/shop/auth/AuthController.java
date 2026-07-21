@@ -1,5 +1,7 @@
 package com.ecommerce.shop.auth;
 
+import com.ecommerce.shop.auth.dto.AuthResponse;
+import com.ecommerce.shop.auth.dto.LoginRequest;
 import com.ecommerce.shop.auth.dto.RegisterRequest;
 import com.ecommerce.shop.auth.dto.UserResponse;
 import jakarta.validation.Valid;
@@ -24,5 +26,10 @@ public class AuthController {
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         UserResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
     }
 }
