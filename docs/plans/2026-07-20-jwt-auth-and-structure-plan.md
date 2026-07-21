@@ -642,7 +642,7 @@ git commit -m "feat: add JwtService, JwtProperties, and base API exception types
 - Consumes: `UserRepository.findByEmail` (Task 2), `User` fields (Task 2).
 - Produces: `UserPrincipal implements UserDetails` with `getId(): String`, `getRole(): String` (in addition to standard `UserDetails` methods) — consumed by `AuthService.login()` (Task 8) after `AuthenticationManager.authenticate(...)` returns it as `Authentication.getPrincipal()`. `CustomUserDetailsService implements UserDetailsService` — auto-detected by Spring Security's `AuthenticationConfiguration` and wired into `SecurityConfig`'s `DaoAuthenticationProvider` (Task 5).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.ecommerce.shop.security;
@@ -706,12 +706,12 @@ class CustomUserDetailsServiceTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./mvnw test -Dtest=CustomUserDetailsServiceTest`
 Expected: FAIL to compile — `UserPrincipal` and `CustomUserDetailsService` don't exist yet.
 
-- [ ] **Step 3: Write `UserPrincipal.java`**
+- [x] **Step 3: Write `UserPrincipal.java`**
 
 ```java
 package com.ecommerce.shop.security;
@@ -766,7 +766,7 @@ public class UserPrincipal implements UserDetails {
 }
 ```
 
-- [ ] **Step 4: Write `CustomUserDetailsService.java`**
+- [x] **Step 4: Write `CustomUserDetailsService.java`**
 
 ```java
 package com.ecommerce.shop.security;
@@ -795,12 +795,12 @@ public class CustomUserDetailsService implements UserDetailsService {
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `./mvnw test -Dtest=CustomUserDetailsServiceTest`
 Expected: `Tests run: 2, Failures: 0, Errors: 0`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/main/java/com/ecommerce/shop/security/UserPrincipal.java src/main/java/com/ecommerce/shop/security/CustomUserDetailsService.java src/test/java/com/ecommerce/shop/security/CustomUserDetailsServiceTest.java
@@ -823,7 +823,7 @@ git commit -m "feat: add UserPrincipal and CustomUserDetailsService"
 - Consumes: `JwtService.parseAccessToken` (Task 3), `CustomUserDetailsService`/`UserPrincipal` (Task 4, auto-detected by Spring Security — not called directly by this task's code).
 - Produces: `AuthenticatedUser` record (`id, email, role`) set as the request-scoped `Authentication` principal for every authenticated request — this is what any future protected controller reads via `@AuthenticationPrincipal AuthenticatedUser user`. `SecurityConfig` locks in the authorization rules `/api/auth/**` → `permitAll`, `/api/admin/**` → `hasRole("ADMIN")`, else → `authenticated`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.ecommerce.shop.demo;
@@ -883,12 +883,12 @@ class DemoControllerIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./mvnw test -Dtest=DemoControllerIntegrationTest`
 Expected: FAIL to compile — `DemoController` doesn't exist yet (and without a `SecurityConfig`, Spring Boot's default security auto-configuration would lock down every endpoint behind a generated password anyway).
 
-- [ ] **Step 3: Write `AuthenticatedUser.java`**
+- [x] **Step 3: Write `AuthenticatedUser.java`**
 
 ```java
 package com.ecommerce.shop.security;
@@ -897,7 +897,7 @@ public record AuthenticatedUser(String id, String email, String role) {
 }
 ```
 
-- [ ] **Step 4: Write `JwtAuthenticationFilter.java`**
+- [x] **Step 4: Write `JwtAuthenticationFilter.java`**
 
 ```java
 package com.ecommerce.shop.security;
@@ -958,11 +958,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 Note the `catch (InvalidTokenException e)`: a filter runs before the `DispatcherServlet`, so `@RestControllerAdvice` cannot catch anything thrown here. An invalid/missing token must simply result in "no authentication set" — Spring Security's own entry point then returns 401 for endpoints that require `authenticated()`.
 
-- [ ] **Step 5: Write `SecurityConfig.java`**
+- [x] **Step 5: Write `SecurityConfig.java`**
 
 ```java
 package com.ecommerce.shop.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -1008,6 +1009,9 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(handling -> handling.authenticationEntryPoint(
+                        (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+                ))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -1019,7 +1023,9 @@ public class SecurityConfig {
 }
 ```
 
-- [ ] **Step 6: Write `MeResponse.java`**
+> **Deviation from original plan (discovered during implementation):** without an explicit `httpBasic()`/`formLogin()` configured, Spring Security's default `AuthenticationEntryPoint` is `Http403ForbiddenEntryPoint`, so unauthenticated requests returned `403` instead of the `401` this task's test expects. Added the explicit `exceptionHandling(...)` block above to fix it — confirmed by `DemoControllerIntegrationTest.meWithoutTokenReturns401` failing (`403` actual) before the fix and passing after.
+
+- [x] **Step 6: Write `MeResponse.java`**
 
 ```java
 package com.ecommerce.shop.demo;
@@ -1028,7 +1034,7 @@ public record MeResponse(String id, String email, String role) {
 }
 ```
 
-- [ ] **Step 7: Write `DemoController.java`**
+- [x] **Step 7: Write `DemoController.java`**
 
 ```java
 package com.ecommerce.shop.demo;
@@ -1053,12 +1059,12 @@ public class DemoController {
 }
 ```
 
-- [ ] **Step 8: Run test to verify it passes**
+- [x] **Step 8: Run test to verify it passes**
 
 Run: `./mvnw test -Dtest=DemoControllerIntegrationTest`
 Expected: `Tests run: 4, Failures: 0, Errors: 0`.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/main/java/com/ecommerce/shop/security src/main/java/com/ecommerce/shop/demo src/test/java/com/ecommerce/shop/demo

@@ -104,6 +104,24 @@ just a rule check — either declaratively in `SecurityConfig` (`.requestMatcher
 or on individual endpoints. The role itself travels inside the access token's claims, so no
 extra database lookup is needed to answer "is this caller allowed to do this?".
 
+## 401 vs. 403 — and a Spring Security default that trips people up
+
+`401 Unauthorized` means "I don't know who you are" (missing or invalid credentials);
+`403 Forbidden` means "I know who you are, and you're not allowed to do this." Our tests
+expect that split: no token → 401, valid token but wrong role → 403.
+
+Spring Security doesn't give you 401 for free, though. It only sends 401 if something in the
+chain — normally `httpBasic()` or `formLogin()` — registers an `AuthenticationEntryPoint` that
+does so. We use neither (there's no browser login form or basic-auth prompt in a JWT API), so
+without extra configuration Spring Security falls back to its default entry point,
+`Http403ForbiddenEntryPoint`, which sends 403 for *everything* — including "you sent no token
+at all." That surfaced as a real, failing test (`meWithoutTokenReturns401` got 403) once
+`SecurityConfig` was wired up. The fix is to register an explicit `authenticationEntryPoint`
+in the filter chain that returns 401 for the "not authenticated" case, leaving Spring
+Security's default `AccessDeniedHandler` to return 403 for the separate "authenticated but
+wrong role" case. Worth remembering any time a hand-rolled `SecurityFilterChain` skips
+`httpBasic`/`formLogin`.
+
 ## Why feature-based packaging
 
 Grouping code by feature (`auth/`, `user/`, `security/`) rather than by technical layer
@@ -120,7 +138,9 @@ files scattered across the same three top-level folders.
 - **Local MongoDB & config plumbing** (Task 1) — `docker-compose.yml` runs a `mongo:7.0` container on `localhost:27017`; `application.properties` / `src/test/resources/application.properties` hold the Mongo URI and `jwt.*` settings (dev vs. test use separate databases, `shop` and `shop_test`).
 - **User domain model** (Task 2) — `src/main/java/com/ecommerce/shop/user/{Role,User,UserRepository}.java`, tested in `UserRepositoryTest.java`. `Role` is the three-value enum (`CUSTOMER`, `SELLER`, `ADMIN`); `User` is the Mongo `@Document` with a unique-indexed `email`.
 - **Signing, access/refresh tokens, the `type` claim, expiry** (Task 3) — `src/main/java/com/ecommerce/shop/security/JwtService.java`, tested in `JwtServiceTest.java`. Configuration (`jwt.secret`, expirations) is bound via `JwtProperties.java` (`@ConfigurationProperties`) from `application.properties`. The base `ApiException`/`ApiError` types (`common/exception/`) that later error handling builds on are also in place.
-- **Password hashing, security filter chain, role-based authorization** — not yet implemented; this section will grow as those tasks land.
+- **Password hashing & login-time user lookup** (Task 4) — `UserPrincipal.java` (wraps `User` as Spring Security's `UserDetails`), `CustomUserDetailsService.java`, tested in `CustomUserDetailsServiceTest.java`. Only used during login itself — see the next point for how a normal request is authenticated.
+- **Security filter chain, role-based authorization, the 401/403 entry point fix** (Task 5) — `AuthenticatedUser.java`, `JwtAuthenticationFilter.java`, `SecurityConfig.java`, `demo/{MeResponse,DemoController}.java`, tested in `DemoControllerIntegrationTest.java`. This is where per-request auth happens: the filter builds `Authentication` straight from the access token's claims (no DB hit), and `/api/me` / `/api/admin/ping` prove it end to end. See "401 vs. 403" above for a real bug this task's tests caught.
+- **Registration, login, refresh, logout endpoints** — not yet implemented; this section will grow as those tasks land.
 
 *This doc will be expanded with concrete file references as each piece above gets
 implemented.*
