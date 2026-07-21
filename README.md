@@ -65,7 +65,22 @@ Configuration lives in `src/main/resources/application.properties`. Key settings
 | `spring.data.mongodb.uri` | `SPRING_DATA_MONGODB_URI` | `mongodb://localhost:27017/shop` |
 | `jwt.secret` | `JWT_SECRET` | a dev-only placeholder — override this for any real deployment |
 
-## API endpoints
+## API documentation
+
+With the app running, **Swagger UI is the official, always-current API reference**:
+
+- Interactive docs: `http://localhost:8080/swagger-ui/index.html`
+- Raw OpenAPI spec: `http://localhost:8080/v3/api-docs`
+
+It documents every endpoint's request/response schema and validation rules straight from the code, and has a Bearer-token Authorize button so you can register/login/try protected endpoints from the browser. Built with `springdoc-openapi` - see
+[`docs/plans/2026-07-21-swagger-openapi-documentation-plan.md`](docs/plans/2026-07-21-swagger-openapi-documentation-plan.md)
+for what shipped and a bug it surfaced (role-check 403s currently come back as 401 - not yet fixed).
+
+A ready-to-import Postman collection covering every endpoint is also available at
+[`docs/requests/java-commerce-api.postman_collection.json`](docs/requests/java-commerce-api.postman_collection.json)
+(see [`docs/requests/README.md`](docs/requests/README.md) for usage) for saved, repeatable request flows.
+
+### Quick reference
 
 | Method | Path | Auth required | Purpose |
 |---|---|---|---|
@@ -81,12 +96,6 @@ Send the access token as `Authorization: Bearer <token>` on any request that req
 admin manually if you need one. See
 [`docs/concepts/jwt-authentication.md`](docs/concepts/jwt-authentication.md) for how the tokens
 and the security filter chain actually work.
-
-A ready-to-import Postman collection covering every endpoint above lives at
-[`docs/requests/java-commerce-api.postman_collection.json`](docs/requests/java-commerce-api.postman_collection.json)
-(see [`docs/requests/README.md`](docs/requests/README.md) for usage). Interactive Swagger/OpenAPI
-docs are planned but not yet implemented - see
-[`docs/plans/2026-07-21-swagger-openapi-documentation-plan.md`](docs/plans/2026-07-21-swagger-openapi-documentation-plan.md).
 
 ## Project structure
 

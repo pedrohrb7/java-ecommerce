@@ -1,6 +1,8 @@
 # Swagger / OpenAPI Documentation Implementation Plan
 
-**Status:** Not started - planning only. No code has been changed yet.
+**Status:** Tasks 1-4 implemented and verified against a local `./mvnw spring-boot:run` instance on an alternate port (the `shop-app` Docker container was left untouched, at the user's request, so it still serves a stale pre-auth image - see Task 5). Task 5's app-restart/README steps are pending a manual `docker compose up -d --build app` by the user.
+
+**Bug found during verification (not part of this plan's scope, not fixed):** `/api/admin/ping` with a valid non-admin token returns `401` instead of `403`. Security debug logs show `AccessDeniedHandlerImpl` correctly computes 403, but Spring Boot's `/error` forward re-enters the same security filter chain, lands on an anonymous context, and the custom `authenticationEntryPoint` in `SecurityConfig` fires a second `sendError(401)` that overwrites the response before it commits. This is pre-existing (unrelated to any change in this plan) and affects every `hasRole(...)` denial in the app, not just this endpoint. Likely fix: `.requestMatchers("/error").permitAll()` in `SecurityConfig` so the forward isn't re-secured. Flagged for the user to decide whether/when to fix.
 
 **Goal:** Make interactive, always-current OpenAPI (Swagger) documentation the official API documentation for `shop`, replacing manual upkeep of endpoint tables in `README.md` as the source of truth (the tables can stay as a quick reference, but the generated docs become authoritative). This complements, not replaces, the manual Postman collection at `docs/requests/` - Swagger UI is for exploring/trying the API; the Postman collection is for saved, repeatable request flows.
 
@@ -23,7 +25,7 @@
 - Modify: `pom.xml`
 
 **Steps:**
-- [ ] Add to `pom.xml`:
+- [x] Add to `pom.xml`:
   ```xml
   <dependency>
       <groupId>org.springdoc</groupId>
@@ -31,8 +33,8 @@
       <version>3.0.3</version>
   </dependency>
   ```
-- [ ] `./mvnw clean install` and confirm it resolves against Boot 4.1.0 without version conflicts. If it fails, check springdoc's release notes for the correct version for Boot 4.1 and update the version above accordingly.
-- [ ] Run the app and confirm `http://localhost:8080/v3/api-docs` returns a JSON OpenAPI document (it will only cover `/api/me` and `/api/admin/ping` at this point, since `/api/auth/**` is a `POST`-only permitAll zone that springdoc can already see - Spring Security blocking the docs UI itself is handled in Task 2). Expect this first run to otherwise mostly work already, since springdoc auto-detects `@RestController` beans without further config.
+- [x] `./mvnw clean install` and confirm it resolves against Boot 4.1.0 without version conflicts. If it fails, check springdoc's release notes for the correct version for Boot 4.1 and update the version above accordingly. (Resolved cleanly, no conflicts.)
+- [x] Run the app and confirm `http://localhost:8080/v3/api-docs` returns a JSON OpenAPI document (it will only cover `/api/me` and `/api/admin/ping` at this point, since `/api/auth/**` is a `POST`-only permitAll zone that springdoc can already see - Spring Security blocking the docs UI itself is handled in Task 2). Expect this first run to otherwise mostly work already, since springdoc auto-detects `@RestController` beans without further config. (Verified on local port 8081, not the Docker container - see plan status above.)
 
 ---
 
@@ -42,7 +44,7 @@
 - Modify: `src/main/java/com/ecommerce/shop/security/SecurityConfig.java`
 
 **Steps:**
-- [ ] Add to the `authorizeHttpRequests` matchers in `securityFilterChain`, before `anyRequest().authenticated()`:
+- [x] Add to the `authorizeHttpRequests` matchers in `securityFilterChain`, before `anyRequest().authenticated()`:
   ```java
   .requestMatchers(
           "/v3/api-docs/**",
@@ -50,7 +52,7 @@
           "/swagger-ui.html"
   ).permitAll()
   ```
-- [ ] Restart the app and confirm `http://localhost:8080/swagger-ui/index.html` loads without a 401/redirect-to-login.
+- [x] Restart the app and confirm `http://localhost:8080/swagger-ui/index.html` loads without a 401/redirect-to-login. (Verified on local port 8081.)
 
 ---
 
@@ -62,7 +64,7 @@
 **Purpose:** without this, Swagger UI has no way to attach `Authorization: Bearer <token>` to try-it-out calls against `/api/me` and `/api/admin/ping`, and the docs page has no title/description.
 
 **Steps:**
-- [ ] Create the config class:
+- [x] Create the config class:
   ```java
   package com.ecommerce.shop.common.config;
 
@@ -98,7 +100,7 @@
       }
   }
   ```
-- [ ] Confirm Swagger UI now shows an "Authorize" padlock, and that `/api/auth/**` endpoints (which don't need the header) still show up without requiring it - global `addSecurityItem` marks it as available/default, not mandatory per-endpoint, so this is cosmetic-only unless Task 4 overrides it per-operation.
+- [x] Confirm Swagger UI now shows an "Authorize" padlock, and that `/api/auth/**` endpoints (which don't need the header) still show up without requiring it - global `addSecurityItem` marks it as available/default, not mandatory per-endpoint, so this is cosmetic-only unless Task 4 overrides it per-operation. (Overridden per-operation in Task 4 via `@SecurityRequirements` on the four `/api/auth/**` methods.)
 
 ---
 
@@ -112,11 +114,11 @@
 - Modify: `src/main/java/com/ecommerce/shop/common/exception/ApiError.java`
 
 **Steps:**
-- [ ] Add `@Tag(name = "Auth")` / `@Tag(name = "Demo")` at the class level of each controller, so Swagger UI groups endpoints instead of listing them flat.
-- [ ] Add `@Operation(summary = ..., description = ...)` to each of the six endpoint methods, phrased for a reader who has never seen the code - e.g. register's description should state the role restriction (`CUSTOMER`/`SELLER` only, `ADMIN` not self-service) and the 8-character password minimum, since those are business rules not obvious from the URL.
-- [ ] Add `@ApiResponses` per method covering the real outcomes: `register` -> 201 + 409 (duplicate email, via `DuplicateEmailException`/`GlobalExceptionHandler`) + 400 (validation); `login` -> 200 + 401; `refresh`/`logout` -> 200/204 + 401 (invalid/expired refresh token, via `InvalidTokenException`); `me`/`admin/ping` -> 200 + 401 + 403. Reference `ApiError` as the schema for all non-2xx responses, since that's what `GlobalExceptionHandler` actually returns.
-- [ ] Add `@Schema(description = ...)` on each record component (e.g. `RegisterRequest.role`: "Must be CUSTOMER or SELLER"; `AuthResponse.expiresInMs`: "Access token lifetime in milliseconds from issuance"). These descriptions are the main payoff of this task - they're exactly the details currently only discoverable by reading validation annotations or `application.properties`.
-- [ ] Re-check `/v3/api-docs` and `/swagger-ui/index.html` after each file to confirm the annotations parse (a malformed annotation fails silently or throws at startup depending on the error - restart after each file rather than batching all edits).
+- [x] Add `@Tag(name = "Auth")` / `@Tag(name = "Demo")` at the class level of each controller, so Swagger UI groups endpoints instead of listing them flat.
+- [x] Add `@Operation(summary = ..., description = ...)` to each of the six endpoint methods, phrased for a reader who has never seen the code - e.g. register's description should state the role restriction (`CUSTOMER`/`SELLER` only, `ADMIN` not self-service) and the 8-character password minimum, since those are business rules not obvious from the URL.
+- [x] Add `@ApiResponses` per method covering the real outcomes: `register` -> 201 + 409 (duplicate email, via `DuplicateEmailException`/`GlobalExceptionHandler`) + 400 (validation); `login` -> 200 + 401; `refresh`/`logout` -> 200/204 + 401 (invalid/expired refresh token, via `InvalidTokenException`); `me`/`admin/ping` -> 200 + 401 + 403. **Correction found during verification:** `ApiError` is only accurate for responses raised by `GlobalExceptionHandler` (register/login/refresh/logout's error cases, confirmed empirically). `/api/me` and `/api/admin/ping`'s 401/403 are raised by the security filter chain directly (`SecurityConfig`'s `authenticationEntryPoint`/default `AccessDeniedHandler`), which return an **empty body**, not `ApiError` - the annotations were corrected to describe this instead of claiming a schema that isn't actually sent.
+- [x] Add `@Schema(description = ...)` on each record component (e.g. `RegisterRequest.role`: "Must be CUSTOMER or SELLER"; `AuthResponse.expiresInMs`: "Access token lifetime in milliseconds from issuance"). These descriptions are the main payoff of this task - they're exactly the details currently only discoverable by reading validation annotations or `application.properties`.
+- [x] Re-check `/v3/api-docs` and `/swagger-ui/index.html` after each file to confirm the annotations parse (a malformed annotation fails silently or throws at startup depending on the error - restart after each file rather than batching all edits). (Verified via `./mvnw clean compile` plus live requests against the local port-8081 instance.)
 
 ---
 

@@ -1,4 +1,10 @@
 package com.ecommerce.shop.demo;
 
-public record MeResponse(String id, String email, String role) {
+import io.swagger.v3.oas.annotations.media.Schema;
+
+public record MeResponse(
+        String id,
+        String email,
+        @Schema(example = "CUSTOMER") String role
+) {
 }
