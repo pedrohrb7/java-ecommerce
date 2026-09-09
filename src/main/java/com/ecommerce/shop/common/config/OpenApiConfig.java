@@ -24,10 +24,12 @@ public class OpenApiConfig {
                                 + "'Bearer <accessToken>' to call protected endpoints."))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME))
                 .components(new Components()
-                        .addSecuritySchemes(BEARER_SCHEME, new SecurityScheme()
-                                .name(BEARER_SCHEME)
-                                .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")
-                                .bearerFormat("JWT")));
+                        .addSecuritySchemes(
+                                BEARER_SCHEME,
+                                new SecurityScheme()
+                                        .name(BEARER_SCHEME)
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")));
     }
 }
